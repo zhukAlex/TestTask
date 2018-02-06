@@ -1,20 +1,21 @@
 package com.example.testtask;
 
-import android.app.Activity;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
-import com.vk.sdk.VKScope;
-import com.vk.sdk.VKSdk;
+import com.example.testtask.helpers.Change;
+import com.example.testtask.helpers.Changes;
+import com.example.testtask.table.history.PropertyAdapterHistory;
 
+import java.util.ArrayList;
 
-public class AuthFragment extends Fragment {
+public class HistoryFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -23,15 +24,22 @@ public class AuthFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    private View view;
+    private ListView listViewHistory;
+    private float historicX;
+    private float historicY;
+    private float DELTA = 100;
+    private ArrayList<Change> rentalProperties = new ArrayList<>();
 
     private OnFragmentInteractionListener mListener;
+    private int index = 0;
 
-    public AuthFragment() {
+    public HistoryFragment() {
         // Required empty public constructor
     }
 
-    public static AuthFragment newInstance(String param1, String param2) {
-        AuthFragment fragment = new AuthFragment();
+    public static HistoryFragment newInstance(String param1, String param2) {
+        HistoryFragment fragment = new HistoryFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
@@ -52,19 +60,24 @@ public class AuthFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_auth, container, false);
-        Button button = (Button)view.findViewById(R.id.buttonAuth);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                VKSdk.login(getActivity(), new String[]{
-                        VKScope.STATUS,
-                        VKScope.PHOTOS
-                });
-            }
-        });
+        view = inflater.inflate(R.layout.fragment_history, container, false);
+
+        addTable();
 
         return view;
+    }
+
+    public void addTable() {
+        Changes changes = new Changes();
+        changes.readFromDB();
+
+        for (int i = changes.getCount() - 1; i >= 0; i--) {
+            rentalProperties.add(changes.getItemAt(i));
+        }
+
+        ArrayAdapter<Change> adapter = new PropertyAdapterHistory(view.getContext(), 0, rentalProperties, R.layout.rowlayout_history);
+        listViewHistory = (ListView)view.findViewById(R.id.listViewHistory);
+        listViewHistory.setAdapter(adapter);
     }
 
     @Override

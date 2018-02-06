@@ -5,19 +5,26 @@
     android:layout_height="51dp"
     android:background="@android:color/white"
     android:orientation="horizontal"
-    android:weightSum="2">
+    android:weightSum="3">
 
     <TextView
         android:background="@drawable/back"
-        android:textSize="35dp"
-        android:id="@+id/textViewNumber"
+        android:textSize="20dp"
+        android:id="@+id/textViewActivity"
         android:layout_weight="1"
         android:layout_height="wrap_content"
         android:layout_width="0dp" />
     <TextView
         android:background="@drawable/back"
-        android:textSize="35dp"
-        android:id="@+id/textViewFIO"
+        android:textSize="20dp"
+        android:id="@+id/textViewTime"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp" />
+    <TextView
+        android:background="@drawable/back"
+        android:textSize="20dp"
+        android:id="@+id/textViewIP"
         android:layout_weight="1"
         android:layout_height="wrap_content"
         android:layout_width="0dp" />

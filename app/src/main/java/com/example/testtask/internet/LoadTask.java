@@ -1,9 +1,11 @@
-package com.example.testtask;
+package com.example.testtask.internet;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+
+import com.example.testtask.MainFragment;
 
 import java.io.InputStream;
 import java.net.URL;

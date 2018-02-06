@@ -5,19 +5,25 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
+import android.text.format.Formatter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.Toast;
 
-import com.vk.sdk.api.VKApi;
+import com.example.testtask.helpers.Change;
+import com.example.testtask.internet.LoadTask;
+import com.example.testtask.internet.PostTask;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.VKParameters;
@@ -31,9 +37,11 @@ import org.json.JSONObject;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import static android.app.Activity.RESULT_OK;
+import static android.content.Context.WIFI_SERVICE;
 
 public class MainFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
@@ -49,6 +57,10 @@ public class MainFragment extends Fragment {
     private EditText editTextStatus;
     private ImageView imageViewAvatar;
     private OnFragmentInteractionListener mListener;
+    private Requester requester = new Requester(this);
+    private String path;
+    private String status;
+    private boolean isChangeStatus, isChangeAvatar;
 
     public MainFragment() {
         // Required empty public constructor
@@ -83,7 +95,8 @@ public class MainFragment extends Fragment {
         imageViewAvatar = (ImageView)view.findViewById(R.id.imageViewAvatar);
 
         loadImage();
-
+        loadStatus();
+        status = editTextStatus.getText().toString();
 
         imageViewAvatar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -97,29 +110,17 @@ public class MainFragment extends Fragment {
         buttonSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                VKParameters parameters = new VKParameters();
-                //   parameters.put("text", "new status");
-                VKRequest request = new VKRequest("status.get", parameters);
+                setChanges();
+              //  VKRequest request = new VKRequest("photos.getProfileUploadServer");
+              //  requester.execute(request, "upload_url");
 
+                VKParameters parameters = new VKParameters();
+                parameters.put("text", editTextStatus.getText().toString());
+                VKRequest request = new VKRequest("status.set", parameters);
                 request.executeWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {
-                        try {
-                            JSONObject js = new JSONObject(response.json.getString("response"));
-                            editTextStatus.setText(js.getString("text"));
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    @Override
-                    public void onError(VKError error) {
-
-                    }
-
-                    @Override
-                    public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
-
+                        Toast.makeText(getContext(), "Status update", Toast.LENGTH_LONG).show();
                     }
                 });
             }
@@ -128,58 +129,41 @@ public class MainFragment extends Fragment {
         return view;
     }
 
-    public void onActivityResult(int requestCode, int resultCode, Intent data)
-    {
-        super.onActivityResult(requestCode, resultCode, data);
+    private void setChanges() {
+        isChangeStatus = !editTextStatus.getText().toString().equals(status);
 
-        switch(requestCode)
-        {
-            case 1:
-            {
-                if (resultCode == RESULT_OK)
-                {
-                    InputStream is = null;
-                    try {
-                        is = getActivity().getContentResolver().openInputStream(data.getData());
-                        imageViewAvatar.setImageBitmap(addBitmap(is));
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                break;
+        if (isChangeStatus || isChangeAvatar) {
+            Change change;
+            String text;
+            WifiManager wm = (WifiManager) getActivity().getApplicationContext().getSystemService(WIFI_SERVICE);
+            String ip = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
+            SimpleDateFormat formatForDateNow = new SimpleDateFormat("dd.MM.yyyy : hh:mm");
+            String date = formatForDateNow.format(new Date());
 
-            }
+            if (isChangeAvatar && isChangeStatus)
+                text = "Upload picture and status";
+            else if (isChangeStatus && !isChangeAvatar)
+                text = "Upload status";
+            else
+                text = "Upload picture";
+
+            change = new Change(date, ip, text);
+            change.writeToDB();
+            
+            isChangeAvatar = false;
+            isChangeStatus = false;
         }
     }
 
-    private Bitmap addBitmap(InputStream is) {
-        Bitmap bitmap = BitmapFactory.decodeStream(is);
-        return bitmap;
-    }
+    private void loadStatus() {
+        VKRequest request = new VKRequest("status.get");
 
-    private void loadImage() {
-     //   new LoadComisTask(terminal, activity).execute();
-        VKParameters parameters = new VKParameters();
-        parameters.put(VKApiConst.FIELDS, "photo_400_orig");
-        VKRequest request = new VKRequest("users.get", parameters);
-        final MainFragment mainFragment = this;
         request.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
             public void onComplete(VKResponse response) {
                 try {
-                    String str = response.json.toString();
-                    String buf;
-                    JSONObject obj;
-
-                    obj = new JSONObject(str);
-                    str = obj.getString("response");
-                    JSONArray arr = new JSONArray(str);
-                    buf = arr.get(0).toString();
-                    obj = new JSONObject(buf);
-                    String url = obj.getString("photo_400_orig");
-                    new LoadTask(mainFragment).execute(url);
+                    JSONObject js = new JSONObject(response.json.getString("response"));
+                    editTextStatus.setText(js.getString("text"));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -195,6 +179,100 @@ public class MainFragment extends Fragment {
 
             }
         });
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch(requestCode)
+        {
+            case 1:
+            {
+                if (resultCode == RESULT_OK)
+                {
+                    InputStream is = null;
+                    try {
+                        path = getRealPathFromURI(getContext(), data.getData());
+                        is = getActivity().getContentResolver().openInputStream(data.getData());
+                        final Bitmap bitmap = addBitmap(is);
+                        imageViewAvatar.setImageBitmap(bitmap);
+                        isChangeAvatar = true;
+
+                     //   VKRequest request = VKApi.uploadWallPhotoRequest(new VKUploadImage(bitmap,
+                        //        VKImageParameters.jpgImage(0.9f)), 0, 60479154);
+
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    private Bitmap addBitmap(InputStream is) {
+        Bitmap bitmap = BitmapFactory.decodeStream(is);
+        return bitmap;
+    }
+
+    public String getRealPathFromURI(Context context, Uri contentUri) {
+        Cursor cursor = null;
+        try {
+            String[] proj = { MediaStore.Images.Media.DATA };
+            cursor = context.getContentResolver().query(contentUri,  proj, null, null, null);
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    private void loadImage() {
+     //   new LoadComisTask(terminal, activity).execute();
+        VKParameters parameters = new VKParameters();
+        parameters.put(VKApiConst.FIELDS, "photo_400_orig");
+        VKRequest request = new VKRequest("users.get", parameters);
+        final MainFragment mainFragment = this;
+        request.executeWithListener(new VKRequest.VKRequestListener() {
+            @Override
+            public void onComplete(VKResponse response) {
+                try {
+                    new LoadTask(mainFragment).execute(parse(response.responseString, "photo_400_orig"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(VKError error) {
+
+            }
+
+            @Override
+            public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
+
+            }
+        });
+    }
+
+    public String parse(String response, String text) throws JSONException {
+        String str = response;
+        String buf;
+        JSONObject obj;
+
+        obj = new JSONObject(str);
+        str = obj.getString("response");
+        JSONArray arr = new JSONArray(str);
+        buf = arr.get(0).toString();
+        obj = new JSONObject(buf);
+        String url = obj.getString(text);
+        return url;
     }
 
     @Override
@@ -222,5 +300,50 @@ public class MainFragment extends Fragment {
                 imageViewAvatar.setImageDrawable(drawable);
             }
         });
+    }
+
+    public void sendRequest(String responseString, String text) {
+        System.out.println(responseString);
+        try {
+            if (text.equals("upload_url")) {
+                String url = new JSONObject(new JSONObject(responseString).getString("response")).getString(text);//parse(responseString, text);
+                new PostTask(this, ((BitmapDrawable) imageViewAvatar.getDrawable()).getBitmap()).execute(url, path);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void saveOwnerPhoto(final String resopnse) {
+        try {
+            JSONObject js = new JSONObject(resopnse);
+            String server = js.getString("server");
+            String hash = js.getString("hash");
+            String photo = js.getString("photo");
+            VKParameters parameters = new VKParameters();
+            parameters.put("server", server);
+            parameters.put("photo", photo);
+            parameters.put("hash", hash);
+
+            VKRequest request = new VKRequest("photos.saveProfilePhoto", parameters);
+            request.executeWithListener(new VKRequest.VKRequestListener() {
+                @Override
+                public void onComplete(VKResponse response) {
+                    System.out.println(resopnse);
+                }
+
+                @Override
+                public void onError(VKError error) {
+             //       System.out.println(error.errorMessage);
+                }
+
+                @Override
+                public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
+
+                }
+            });
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }

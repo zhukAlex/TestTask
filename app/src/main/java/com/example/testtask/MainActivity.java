@@ -18,6 +18,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.example.testtask.db.DB;
 import com.vk.sdk.VKAccessToken;
 import com.vk.sdk.VKAccessTokenTracker;
 import com.vk.sdk.VKCallback;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity
 
     public static int STATE_AUTH = 0;
 
+
     private VKAccessTokenTracker vkAccessTokenTracker = new VKAccessTokenTracker() {
         @Override
         public void onVKAccessTokenChanged(VKAccessToken oldToken, VKAccessToken newToken) {
@@ -61,6 +63,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        DB.getInstance(getBaseContext());
         vkAccessTokenTracker.startTracking();
         setContentView(R.layout.activity_main);
 
@@ -77,7 +80,7 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
 
-        if (VKSdk.isLoggedIn() == true){
+        if (VKSdk.isLoggedIn()) {
             startFragment(MainFragment.class);
         } else {
             startFragment(AuthFragment.class);
@@ -125,7 +128,7 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onError(VKError error) {
-                Toast.makeText(getApplicationContext(), "Please, verify your account!", Toast.LENGTH_LONG);
+                Toast.makeText(getApplicationContext(), "Please, verify your account!", Toast.LENGTH_LONG).show();
             }
         })) {
             super.onActivityResult(requestCode, resultCode, data);
@@ -146,11 +149,6 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -159,16 +157,22 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-
+        boolean isAuth = VKSdk.isLoggedIn();
         if (id == R.id.nav_main) {
-            // Handle the camera action
-        } else if (id == R.id.nav_status) {
-
+            if (isAuth)
+                startFragment(MainFragment.class);
+            else
+                Toast.makeText(getBaseContext(), "You have to authenticate!", Toast.LENGTH_LONG).show();
+        } else if (id == R.id.nav_history) {
+            startFragment(HistoryFragment.class);
         } else if (id == R.id.nav_contacts) {
             startFragment(ContactsFragment.class);
         } else if (id == R.id.nav_logout) {
-            VKSdk.logout();
-            startFragment(AuthFragment.class);
+            if (isAuth) {
+                VKSdk.logout();
+                startFragment(AuthFragment.class);
+            } else
+                Toast.makeText(getBaseContext(), "You have to authenticate!", Toast.LENGTH_LONG).show();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

@@ -1,15 +1,13 @@
-package com.example.testtask.table;
+package com.example.testtask.table.contact;
 
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.testtask.R;
@@ -21,15 +19,15 @@ import java.util.List;
  * Created by Алексей on 04.02.2018.
  */
 
-public class PropertyArrayAdapter extends ArrayAdapter<Property> {
+public class PropertyAdapterContacts extends ArrayAdapter<PropertyContacts> {
 
     private Context context;
-    private List<Property> rentalProperties;
+    private List<PropertyContacts> rentalProperties;
     private int id;
     private int i = 0;
 
     //constructor, call on creation
-    public PropertyArrayAdapter(Context context, int resource, ArrayList<Property> objects, int id) {
+    public PropertyAdapterContacts(Context context, int resource, ArrayList<PropertyContacts> objects, int id) {
         super(context, resource, objects);
         this.id = id;
         this.context = context;
@@ -37,7 +35,7 @@ public class PropertyArrayAdapter extends ArrayAdapter<Property> {
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
-        Property property = rentalProperties.get(position);
+        PropertyContacts property = rentalProperties.get(position);
 
         //get the inflater and inflate the XML layout for each item
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);

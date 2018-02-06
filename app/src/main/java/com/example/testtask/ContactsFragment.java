@@ -4,27 +4,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Message;
 import android.provider.ContactsContract;
-import android.support.annotation.RequiresApi;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.view.animation.TranslateAnimation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.example.testtask.swipe.MyAnimationListener;
-import com.example.testtask.swipe.SwipeDetector;
-import com.example.testtask.table.Property;
-import com.example.testtask.table.PropertyArrayAdapter;
+import com.example.testtask.table.contact.PropertyContacts;
+import com.example.testtask.table.contact.PropertyAdapterContacts;
 
 import java.util.ArrayList;
 
@@ -42,8 +33,8 @@ public class ContactsFragment extends Fragment {
     private float historicX;
     private float historicY;
     private float DELTA = 100;
-    private SwipeDetector swipeDetector = new SwipeDetector();
-    private ArrayList<Property> rentalProperties = new ArrayList<>();
+
+    private ArrayList<PropertyContacts> rentalProperties = new ArrayList<>();
 
     private OnFragmentInteractionListener mListener;
     private int index = 0;
@@ -94,10 +85,10 @@ public class ContactsFragment extends Fragment {
         {
             while (cursor.moveToNext())
             {
-                rentalProperties.add(new Property(cursor.getString(1), cursor.getString(2)));
+                rentalProperties.add(new PropertyContacts(cursor.getString(1), cursor.getString(2)));
             }
         }
-        ArrayAdapter<Property> adapter = new PropertyArrayAdapter(view.getContext(), 0, rentalProperties, R.layout.rowlayout);
+        ArrayAdapter<PropertyContacts> adapter = new PropertyAdapterContacts(view.getContext(), 0, rentalProperties, R.layout.rowlayout);
         listViewContacts = (ListView)view.findViewById(R.id.listViewContacts);
         listViewContacts.setAdapter(adapter);
     }
@@ -135,5 +126,4 @@ public class ContactsFragment extends Fragment {
         super.onDetach();
         mListener = null;
     }
-
 }

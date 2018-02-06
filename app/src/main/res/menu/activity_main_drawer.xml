@@ -8,8 +8,8 @@
             android:id="@+id/nav_main"
             android:title="Main" />
         <item
-            android:id="@+id/nav_status"
-            android:title="Status" />
+            android:id="@+id/nav_history"
+            android:title="History" />
         <item
             android:id="@+id/nav_contacts"
             android:title="Contacts" />
